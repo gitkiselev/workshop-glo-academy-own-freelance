@@ -9,8 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnExit = document.getElementById('btn-exit');
     const formCustomer = document.getElementById('form-customer');
     const ordersTable = document.getElementById('orders');
-    const modalOrder = document.getElementById('order_read')
-    const modalOrderActive = document.getElementById('order_active')
+    const modalOrder = document.getElementById('order_read');
+    const modalOrderActive = document.getElementById('order_active');
+    const headTable = document.getElementById('headTable');
     
     const orders = JSON.parse(localStorage.getItem('freeOrders')) || [];
 
@@ -18,17 +19,24 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('freeOrders', JSON.stringify(orders))
     }
 
-    const calcDeadline = (deadline) => {
-        const diff = Date.parse(deadline) - Date.now();
-        const daysDiff = Math.floor(diff / (1000 * 3600 * 24));
-        function declOfNum(number, titles) {  
-            const cases = [2, 0, 1, 1, 1, 2];  
-            return number +  ' ' + titles[ (number%100>4 && number%100<20)? 2 : cases[(number%10<5)?number%10:5] ];  
+    const declOfNum = (number, titles) => number + ' ' + titles[(number % 100 > 4 && number % 100 < 20)
+         ? 2 : [2, 0, 1, 1, 1, 2][(number % 10 < 5) ? number % 10 : 5]];
+    const calcDeadline = (date) => {
+        // const diff = Date.parse(deadline) - Date.now();
+        // const daysDiff = Math.floor(diff / (1000 * 3600 * 24));
+        // function declOfNum(number, titles) {  
+        //     const cases = [2, 0, 1, 1, 1, 2];  
+        //     return number +  ' ' + titles[ (number%100>4 && number%100<20)? 2 : cases[(number%10<5)?number%10:5] ];  
+        // }
+        // return declOfNum(daysDiff, ['день', 'дня', 'дней']);//1, 2, 5
+        const deadline = new Date(date);
+        const toDay = Date.now();
+
+        const remaining = (deadline - toDay) / 1000 / 60 / 60;
+        if (remaining / 24 > 2) {
+            return declOfNum(Math.floor(remaining / 24), ['день', 'дня', 'дней'])
         }
-        
-        
-        
-        return declOfNum(daysDiff, ['день', 'дня', 'дней']);
+        return declOfNum(Math.floor(remaining), ['час', 'часа', 'часов']);
     }
     const renderOrders = () => {
         ordersTable.textContent = '';
@@ -104,6 +112,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         modal.addEventListener('click', handlerModal);
     }
+    const sortOrder = (arr, property) => {
+        arr.sort((a, b) => a[property] > b[property] ? 1 : -1)
+    }
+
+    headTable.addEventListener('click', (e) => {
+        const target = e.target;
+
+        if (target.classList.contains('head-sort')) {
+            if (target.id === 'taskSort') {
+                sortOrder(orders, 'title');
+            }
+            if (target.id === 'currencySort') {
+                sortOrder(orders, 'currency');
+            }
+            if (target.id === 'deadlineSort') {
+                sortOrder(orders, 'deadline');
+            }
+            toStorage();
+            renderOrders();
+        }
+    })
     ordersTable.addEventListener('click', (e) => {
         const target = e.target;
         const targetOrder = target.closest('.order')
@@ -115,6 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     customer.addEventListener('click', () => {
         blockChoice.style.display = 'none';
+        const toDay = new Date().toISOString().substring(0, 10);
+        document.getElementById('deadline').min = toDay;
         blockCustomer.style.display = 'block';
         btnExit.style.display = 'block';
     });
